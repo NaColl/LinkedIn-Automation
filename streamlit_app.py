@@ -392,7 +392,19 @@ def generate_posts_page():
                 )
 
                 st.session_state.generated_posts = posts
-                st.success(f"Generated {len(posts)} posts!")
+
+                if len(posts) > 0:
+                    st.success(f"Generated {len(posts)} posts!")
+                else:
+                    # Show errors if no posts were generated
+                    errors = generator.get_errors()
+                    if errors:
+                        st.error(f"Failed to generate posts. {len(errors)} error(s) occurred:")
+                        for err in errors:
+                            st.warning(f"- {err}")
+                        st.info("This may be due to content safety filters. Try adjusting your article content or try again.")
+                    else:
+                        st.warning("No posts were generated. Please try again or check your article content.")
 
             except Exception as e:
                 st.error(f"Error generating posts: {str(e)}")

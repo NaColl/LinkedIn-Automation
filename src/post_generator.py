@@ -57,8 +57,29 @@ class PostGenerator:
             raise ValueError("GEMINI_API_KEY not set in environment variables")
 
         genai.configure(api_key=GEMINI_API_KEY)
-        self.model = genai.GenerativeModel('gemini-1.5-flash')
+
+        # Configure generation settings
+        generation_config = {
+            "temperature": 0.9,
+            "top_p": 0.95,
+            "max_output_tokens": 2048,
+        }
+
+        # Reduce safety filtering for content generation
+        safety_settings = [
+            {"category": "HARM_CATEGORY_HARASSMENT", "threshold": "BLOCK_ONLY_HIGH"},
+            {"category": "HARM_CATEGORY_HATE_SPEECH", "threshold": "BLOCK_ONLY_HIGH"},
+            {"category": "HARM_CATEGORY_SEXUALLY_EXPLICIT", "threshold": "BLOCK_MEDIUM_AND_ABOVE"},
+            {"category": "HARM_CATEGORY_DANGEROUS_CONTENT", "threshold": "BLOCK_ONLY_HIGH"},
+        ]
+
+        self.model = genai.GenerativeModel(
+            'gemini-1.5-flash',
+            generation_config=generation_config,
+            safety_settings=safety_settings
+        )
         self.generated_posts: list[GeneratedPost] = []
+        self.errors: list[str] = []  # Track errors for debugging
 
     def _analyze_top_posts(self, posts: list[LinkedInPost]) -> str:
         """Analyze top posts to understand what makes them successful."""
@@ -219,7 +240,33 @@ Generate the post now:"""
 
         try:
             response = self.model.generate_content(prompt)
-            response_text = response.text.strip()
+
+            # Check if response was blocked by safety filters
+            if not response.candidates:
+                error_msg = f"No response generated for {style} post - content may have been filtered"
+                console.print(f"[yellow]{error_msg}[/yellow]")
+                self.errors.append(error_msg)
+                return None
+
+            # Check candidate finish reason
+            candidate = response.candidates[0]
+            if hasattr(candidate, 'finish_reason') and candidate.finish_reason != 1:  # 1 = STOP (normal)
+                finish_reasons = {0: "UNSPECIFIED", 1: "STOP", 2: "MAX_TOKENS", 3: "SAFETY", 4: "RECITATION", 5: "OTHER"}
+                reason = finish_reasons.get(candidate.finish_reason, str(candidate.finish_reason))
+                if candidate.finish_reason == 3:  # SAFETY
+                    error_msg = f"Content blocked by safety filter for {style} post"
+                    console.print(f"[yellow]{error_msg}[/yellow]")
+                    self.errors.append(error_msg)
+                    return None
+
+            # Try to get text from response
+            try:
+                response_text = response.text.strip()
+            except ValueError as e:
+                error_msg = f"Could not extract text from response for {style} post: {e}"
+                console.print(f"[yellow]{error_msg}[/yellow]")
+                self.errors.append(error_msg)
+                return None
 
             # Clean up response if it has markdown code blocks
             if "```json" in response_text:
@@ -245,11 +292,23 @@ Generate the post now:"""
             )
 
         except json.JSONDecodeError as e:
-            console.print(f"[yellow]Could not parse response for {style} post: {e}[/yellow]")
+            error_msg = f"Could not parse JSON response for {style} post: {e}"
+            console.print(f"[yellow]{error_msg}[/yellow]")
+            self.errors.append(error_msg)
             return None
         except Exception as e:
-            console.print(f"[red]Error generating {style} post: {e}[/red]")
+            error_msg = f"Error generating {style} post: {e}"
+            console.print(f"[red]{error_msg}[/red]")
+            self.errors.append(error_msg)
             return None
+
+    def get_errors(self) -> list[str]:
+        """Return list of errors encountered during generation."""
+        return self.errors.copy()
+
+    def clear_errors(self):
+        """Clear the error list."""
+        self.errors.clear()
 
     def display_posts(self, posts: list[GeneratedPost] = None):
         """Display generated posts in a formatted way."""
