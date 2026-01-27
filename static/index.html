@@ -1,0 +1,1012 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LinkedIn Post Curator</title>
+    <style>
+        :root {
+            --primary: #0a66c2;
+            --primary-dark: #004182;
+            --success: #057642;
+            --warning: #b24020;
+            --bg: #f3f2ef;
+            --card-bg: #ffffff;
+            --text: #191919;
+            --text-light: #666666;
+            --border: #e0e0e0;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.6;
+        }
+
+        /* Header */
+        header {
+            background: var(--card-bg);
+            border-bottom: 1px solid var(--border);
+            padding: 1rem 2rem;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .header-content {
+            max-width: 1400px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--primary);
+        }
+
+        .status-badge {
+            padding: 0.25rem 0.75rem;
+            border-radius: 1rem;
+            font-size: 0.8rem;
+            background: #e7f3e8;
+            color: var(--success);
+        }
+
+        .status-badge.warning {
+            background: #fff4e5;
+            color: var(--warning);
+        }
+
+        /* Navigation */
+        nav {
+            background: var(--card-bg);
+            border-bottom: 1px solid var(--border);
+        }
+
+        .nav-tabs {
+            max-width: 1400px;
+            margin: 0 auto;
+            display: flex;
+            gap: 0;
+        }
+
+        .nav-tab {
+            padding: 1rem 1.5rem;
+            cursor: pointer;
+            border-bottom: 2px solid transparent;
+            color: var(--text-light);
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+
+        .nav-tab:hover {
+            color: var(--text);
+            background: #f8f8f8;
+        }
+
+        .nav-tab.active {
+            color: var(--primary);
+            border-bottom-color: var(--primary);
+        }
+
+        /* Main Content */
+        main {
+            max-width: 1400px;
+            margin: 2rem auto;
+            padding: 0 2rem;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        /* Cards */
+        .card {
+            background: var(--card-bg);
+            border-radius: 8px;
+            border: 1px solid var(--border);
+            padding: 1.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+
+        .card-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+        }
+
+        /* Buttons */
+        .btn {
+            padding: 0.6rem 1.2rem;
+            border-radius: 1.5rem;
+            border: none;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 0.9rem;
+            transition: all 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: var(--primary-dark);
+        }
+
+        .btn-secondary {
+            background: transparent;
+            color: var(--primary);
+            border: 1px solid var(--primary);
+        }
+
+        .btn-secondary:hover {
+            background: #e7f3ff;
+        }
+
+        .btn-danger {
+            background: #cc1016;
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background: #990000;
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .btn-sm {
+            padding: 0.4rem 0.8rem;
+            font-size: 0.8rem;
+        }
+
+        /* Forms */
+        .form-group {
+            margin-bottom: 1rem;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            font-size: 1rem;
+            font-family: inherit;
+        }
+
+        .form-control:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 2px rgba(10, 102, 194, 0.1);
+        }
+
+        textarea.form-control {
+            min-height: 200px;
+            resize: vertical;
+        }
+
+        /* Grid */
+        .grid {
+            display: grid;
+            gap: 1rem;
+        }
+
+        .grid-2 {
+            grid-template-columns: repeat(2, 1fr);
+        }
+
+        .grid-3 {
+            grid-template-columns: repeat(3, 1fr);
+        }
+
+        @media (max-width: 768px) {
+            .grid-2, .grid-3 {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Article List */
+        .article-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .article-item:last-child {
+            border-bottom: none;
+        }
+
+        .article-info h4 {
+            margin-bottom: 0.25rem;
+        }
+
+        .article-info .meta {
+            color: var(--text-light);
+            font-size: 0.85rem;
+        }
+
+        .article-actions {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        /* Ideas Cards */
+        .idea-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 8px;
+            padding: 1.5rem;
+        }
+
+        .idea-card.theme-ai {
+            background: linear-gradient(135deg, #0a66c2 0%, #004182 100%);
+        }
+
+        .idea-card.theme-automation {
+            background: linear-gradient(135deg, #057642 0%, #034d2c 100%);
+        }
+
+        .idea-card.theme-productivity {
+            background: linear-gradient(135deg, #b24020 0%, #7a2c15 100%);
+        }
+
+        .idea-card h4 {
+            margin-bottom: 0.5rem;
+            font-size: 1rem;
+        }
+
+        .idea-card .hook {
+            font-style: italic;
+            opacity: 0.9;
+            margin-bottom: 1rem;
+            font-size: 0.95rem;
+        }
+
+        .idea-meta {
+            display: flex;
+            gap: 1rem;
+            font-size: 0.8rem;
+            opacity: 0.85;
+        }
+
+        /* Post Preview */
+        .post-preview {
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 1.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .post-preview-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 1rem;
+        }
+
+        .post-type-badge {
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .post-type-badge.hook-story { background: #e7f3ff; color: #0a66c2; }
+        .post-type-badge.listicle { background: #e7f3e8; color: #057642; }
+        .post-type-badge.question { background: #fff4e5; color: #b24020; }
+        .post-type-badge.insight { background: #f3e8ff; color: #7c3aed; }
+        .post-type-badge.contrarian { background: #fee2e2; color: #dc2626; }
+
+        .post-content {
+            white-space: pre-wrap;
+            font-size: 0.95rem;
+            line-height: 1.7;
+            margin-bottom: 1rem;
+        }
+
+        .post-hashtags {
+            color: var(--primary);
+            font-size: 0.9rem;
+        }
+
+        /* Progress */
+        .progress-container {
+            text-align: center;
+            padding: 2rem;
+        }
+
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 3px solid var(--border);
+            border-top-color: var(--primary);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 1rem;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Empty State */
+        .empty-state {
+            text-align: center;
+            padding: 3rem;
+            color: var(--text-light);
+        }
+
+        .empty-state svg {
+            width: 64px;
+            height: 64px;
+            margin-bottom: 1rem;
+            opacity: 0.5;
+        }
+
+        /* Modal */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            display: none;
+        }
+
+        .modal-overlay.active {
+            display: flex;
+        }
+
+        .modal {
+            background: var(--card-bg);
+            border-radius: 8px;
+            width: 90%;
+            max-width: 800px;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+
+        .modal-header {
+            padding: 1.5rem;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .modal-body {
+            padding: 1.5rem;
+        }
+
+        .modal-footer {
+            padding: 1rem 1.5rem;
+            border-top: 1px solid var(--border);
+            display: flex;
+            justify-content: flex-end;
+            gap: 0.5rem;
+        }
+
+        .close-btn {
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: var(--text-light);
+        }
+
+        /* Utility */
+        .text-center { text-align: center; }
+        .mb-1 { margin-bottom: 0.5rem; }
+        .mb-2 { margin-bottom: 1rem; }
+        .mt-2 { margin-top: 1rem; }
+        .flex { display: flex; }
+        .gap-1 { gap: 0.5rem; }
+        .gap-2 { gap: 1rem; }
+        .justify-between { justify-content: space-between; }
+        .items-center { align-items: center; }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="header-content">
+            <div class="logo">LinkedIn Post Curator</div>
+            <div id="config-status"></div>
+        </div>
+    </header>
+
+    <nav>
+        <div class="nav-tabs">
+            <div class="nav-tab active" data-tab="ideas">Content Ideas</div>
+            <div class="nav-tab" data-tab="articles">My Articles</div>
+            <div class="nav-tab" data-tab="generate">Generate Posts</div>
+            <div class="nav-tab" data-tab="linkedin">LinkedIn Scanner</div>
+        </div>
+    </nav>
+
+    <main>
+        <!-- Content Ideas Tab -->
+        <div id="ideas-tab" class="tab-content active">
+            <div class="card">
+                <div class="card-header">
+                    <h2 class="card-title">Trending Content Ideas</h2>
+                    <button class="btn btn-primary" onclick="refreshIdeas()">
+                        Refresh Ideas
+                    </button>
+                </div>
+                <p class="mb-2" style="color: var(--text-light);">Content ideas based on top-performing LinkedIn posts in AI & Automation.</p>
+                <div id="ideas-container">
+                    <div class="empty-state">
+                        <p>Loading content ideas...</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <h3 class="card-title mb-2">Trending Themes</h3>
+                <div id="themes-container" class="flex gap-1" style="flex-wrap: wrap;">
+                    <!-- Populated by JS -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Articles Tab -->
+        <div id="articles-tab" class="tab-content">
+            <div class="card">
+                <div class="card-header">
+                    <h2 class="card-title">My Substack Articles</h2>
+                    <button class="btn btn-primary" onclick="openNewArticleModal()">
+                        + New Article
+                    </button>
+                </div>
+                <div id="articles-list">
+                    <div class="empty-state">
+                        <p>Loading articles...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Generate Posts Tab -->
+        <div id="generate-tab" class="tab-content">
+            <div class="grid grid-2">
+                <div class="card">
+                    <h2 class="card-title mb-2">Generate LinkedIn Posts</h2>
+                    <div class="form-group">
+                        <label>Select Article</label>
+                        <select id="article-select" class="form-control">
+                            <option value="">-- Select an article --</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Number of Posts</label>
+                        <select id="num-posts" class="form-control">
+                            <option value="3">3 posts</option>
+                            <option value="5" selected>5 posts</option>
+                            <option value="7">7 posts</option>
+                            <option value="10">10 posts</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>
+                            <input type="checkbox" id="use-inspiration" checked>
+                            Use top LinkedIn posts as inspiration
+                        </label>
+                    </div>
+                    <button class="btn btn-primary" onclick="generatePosts()" id="generate-btn">
+                        Generate Posts
+                    </button>
+                    <div id="generation-progress" style="display: none;" class="mt-2">
+                        <div class="progress-container">
+                            <div class="spinner"></div>
+                            <p id="generation-status">Generating...</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <h3 class="card-title mb-2">Post Styles Generated</h3>
+                    <ul style="list-style: none; padding: 0;">
+                        <li class="mb-1"><span class="post-type-badge hook-story">Hook-Story</span> Attention-grabbing hook + narrative</li>
+                        <li class="mb-1"><span class="post-type-badge listicle">Listicle</span> Numbered actionable items</li>
+                        <li class="mb-1"><span class="post-type-badge question">Question</span> Thought-provoking opener</li>
+                        <li class="mb-1"><span class="post-type-badge insight">Insight</span> Counterintuitive findings</li>
+                        <li class="mb-1"><span class="post-type-badge contrarian">Contrarian</span> Challenge conventional wisdom</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="card mt-2">
+                <h3 class="card-title mb-2">Generated Posts</h3>
+                <div id="generated-posts">
+                    <div class="empty-state">
+                        <p>Select an article and click Generate to create LinkedIn posts.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- LinkedIn Scanner Tab -->
+        <div id="linkedin-tab" class="tab-content">
+            <div class="card">
+                <div class="card-header">
+                    <h2 class="card-title">LinkedIn Post Scanner</h2>
+                    <button class="btn btn-primary" onclick="startScraping()" id="scrape-btn">
+                        Scan LinkedIn
+                    </button>
+                </div>
+                <p class="mb-2" style="color: var(--text-light);">
+                    Scan LinkedIn for top-performing posts about AI and automation.
+                    This requires LinkedIn credentials in your .env file.
+                </p>
+                <div id="scraping-progress" style="display: none;">
+                    <div class="progress-container">
+                        <div class="spinner"></div>
+                        <p id="scraping-status">Starting scan...</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <h3 class="card-title mb-2">Cached LinkedIn Posts</h3>
+                <div id="linkedin-posts">
+                    <div class="empty-state">
+                        <p>Loading cached posts...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- New/Edit Article Modal -->
+    <div id="article-modal" class="modal-overlay">
+        <div class="modal">
+            <div class="modal-header">
+                <h3 id="modal-title">New Article</h3>
+                <button class="close-btn" onclick="closeModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label>Title</label>
+                    <input type="text" id="article-title" class="form-control" placeholder="Enter article title">
+                </div>
+                <div class="form-group">
+                    <label>Content (Markdown supported)</label>
+                    <textarea id="article-content" class="form-control" placeholder="Paste your Substack article content here..."></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeModal()">Cancel</button>
+                <button class="btn btn-primary" onclick="saveArticle()" id="save-article-btn">Save Article</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // State
+        let currentEditingArticle = null;
+        let articles = [];
+
+        // API Base URL
+        const API_BASE = '';
+
+        // Tab Navigation
+        document.querySelectorAll('.nav-tab').forEach(tab => {
+            tab.addEventListener('click', () => {
+                document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+                document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+
+                tab.classList.add('active');
+                document.getElementById(`${tab.dataset.tab}-tab`).classList.add('active');
+            });
+        });
+
+        // Initialize
+        async function init() {
+            await checkConfig();
+            await loadArticles();
+            await loadIdeas();
+            await loadLinkedInPosts();
+        }
+
+        // Check Configuration
+        async function checkConfig() {
+            try {
+                const res = await fetch(`${API_BASE}/api/config`);
+                const config = await res.json();
+
+                let status = [];
+                if (!config.gemini_configured) status.push('Gemini API');
+                if (!config.linkedin_configured) status.push('LinkedIn');
+
+                const statusEl = document.getElementById('config-status');
+                if (status.length > 0) {
+                    statusEl.innerHTML = `<span class="status-badge warning">Setup needed: ${status.join(', ')}</span>`;
+                } else {
+                    statusEl.innerHTML = `<span class="status-badge">Ready</span>`;
+                }
+            } catch (e) {
+                console.error('Config check failed:', e);
+            }
+        }
+
+        // Articles
+        async function loadArticles() {
+            try {
+                const res = await fetch(`${API_BASE}/api/articles`);
+                const data = await res.json();
+                articles = data.articles;
+                renderArticles();
+                updateArticleSelect();
+            } catch (e) {
+                console.error('Failed to load articles:', e);
+                document.getElementById('articles-list').innerHTML = '<div class="empty-state"><p>Failed to load articles</p></div>';
+            }
+        }
+
+        function renderArticles() {
+            const container = document.getElementById('articles-list');
+
+            if (articles.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <p>No articles yet. Click "New Article" to add your Substack content.</p>
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = articles.map(a => `
+                <div class="article-item">
+                    <div class="article-info">
+                        <h4>${escapeHtml(a.title)}</h4>
+                        <div class="meta">${a.word_count} words | ${a.filename}</div>
+                    </div>
+                    <div class="article-actions">
+                        <button class="btn btn-secondary btn-sm" onclick="editArticle('${a.filename}')">Edit</button>
+                        <button class="btn btn-danger btn-sm" onclick="deleteArticle('${a.filename}')">Delete</button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function updateArticleSelect() {
+            const select = document.getElementById('article-select');
+            select.innerHTML = '<option value="">-- Select an article --</option>' +
+                articles.map(a => `<option value="${a.filename}">${escapeHtml(a.title)}</option>`).join('');
+        }
+
+        function openNewArticleModal() {
+            currentEditingArticle = null;
+            document.getElementById('modal-title').textContent = 'New Article';
+            document.getElementById('article-title').value = '';
+            document.getElementById('article-content').value = '';
+            document.getElementById('article-title').disabled = false;
+            document.getElementById('article-modal').classList.add('active');
+        }
+
+        async function editArticle(filename) {
+            try {
+                const res = await fetch(`${API_BASE}/api/articles/${filename}`);
+                const article = await res.json();
+
+                currentEditingArticle = filename;
+                document.getElementById('modal-title').textContent = 'Edit Article';
+                document.getElementById('article-title').value = article.title;
+                document.getElementById('article-title').disabled = true;
+                document.getElementById('article-content').value = article.content;
+                document.getElementById('article-modal').classList.add('active');
+            } catch (e) {
+                alert('Failed to load article');
+            }
+        }
+
+        async function saveArticle() {
+            const title = document.getElementById('article-title').value.trim();
+            const content = document.getElementById('article-content').value.trim();
+
+            if (!title || !content) {
+                alert('Please fill in both title and content');
+                return;
+            }
+
+            try {
+                if (currentEditingArticle) {
+                    // Update existing
+                    await fetch(`${API_BASE}/api/articles/${currentEditingArticle}`, {
+                        method: 'PUT',
+                        headers: {'Content-Type': 'application/json'},
+                        body: JSON.stringify({content})
+                    });
+                } else {
+                    // Create new
+                    await fetch(`${API_BASE}/api/articles`, {
+                        method: 'POST',
+                        headers: {'Content-Type': 'application/json'},
+                        body: JSON.stringify({title, content})
+                    });
+                }
+
+                closeModal();
+                await loadArticles();
+            } catch (e) {
+                alert('Failed to save article');
+            }
+        }
+
+        async function deleteArticle(filename) {
+            if (!confirm('Are you sure you want to delete this article?')) return;
+
+            try {
+                await fetch(`${API_BASE}/api/articles/${filename}`, {method: 'DELETE'});
+                await loadArticles();
+            } catch (e) {
+                alert('Failed to delete article');
+            }
+        }
+
+        function closeModal() {
+            document.getElementById('article-modal').classList.remove('active');
+            currentEditingArticle = null;
+        }
+
+        // Content Ideas
+        async function loadIdeas() {
+            try {
+                const res = await fetch(`${API_BASE}/api/ideas`);
+                const data = await res.json();
+                renderIdeas(data);
+            } catch (e) {
+                document.getElementById('ideas-container').innerHTML = '<div class="empty-state"><p>Failed to load ideas. Try scanning LinkedIn first.</p></div>';
+            }
+        }
+
+        function renderIdeas(data) {
+            const container = document.getElementById('ideas-container');
+            const themesContainer = document.getElementById('themes-container');
+
+            if (!data.ideas || data.ideas.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <p>No content ideas yet. Scan LinkedIn first to generate ideas based on top posts.</p>
+                        <button class="btn btn-primary mt-2" onclick="document.querySelector('[data-tab=linkedin]').click()">Go to LinkedIn Scanner</button>
+                    </div>
+                `;
+                return;
+            }
+
+            // Render ideas
+            container.innerHTML = `<div class="grid grid-3">${data.ideas.map((idea, i) => {
+                const themeClass = idea.theme.toLowerCase().includes('ai') ? 'theme-ai' :
+                                   idea.theme.toLowerCase().includes('auto') ? 'theme-automation' :
+                                   idea.theme.toLowerCase().includes('prod') ? 'theme-productivity' : '';
+                return `
+                    <div class="idea-card ${themeClass}">
+                        <h4>${idea.theme}</h4>
+                        <div class="hook">"${escapeHtml(idea.hook_pattern)}"</div>
+                        <div class="idea-meta">
+                            <span>Format: ${idea.format_suggestion}</span>
+                            <span>Potential: ${idea.engagement_potential}</span>
+                        </div>
+                    </div>
+                `;
+            }).join('')}</div>`;
+
+            // Render themes
+            if (data.trending_themes) {
+                themesContainer.innerHTML = data.trending_themes.map(t =>
+                    `<span class="status-badge">${escapeHtml(t)}</span>`
+                ).join('');
+            }
+        }
+
+        async function refreshIdeas() {
+            await loadIdeas();
+        }
+
+        // Post Generation
+        async function generatePosts() {
+            const articlePath = document.getElementById('article-select').value;
+            if (!articlePath) {
+                alert('Please select an article');
+                return;
+            }
+
+            const numPosts = parseInt(document.getElementById('num-posts').value);
+            const useInspiration = document.getElementById('use-inspiration').checked;
+
+            document.getElementById('generate-btn').disabled = true;
+            document.getElementById('generation-progress').style.display = 'block';
+            document.getElementById('generated-posts').innerHTML = '';
+
+            try {
+                // Start generation
+                await fetch(`${API_BASE}/api/generate`, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({
+                        article_path: articlePath,
+                        num_posts: numPosts,
+                        use_inspiration: useInspiration
+                    })
+                });
+
+                // Poll for status
+                const checkStatus = async () => {
+                    const res = await fetch(`${API_BASE}/api/generate/status`);
+                    const status = await res.json();
+
+                    document.getElementById('generation-status').textContent = status.progress;
+
+                    if (status.running) {
+                        setTimeout(checkStatus, 1000);
+                    } else {
+                        document.getElementById('generate-btn').disabled = false;
+                        document.getElementById('generation-progress').style.display = 'none';
+
+                        if (status.posts && status.posts.length > 0) {
+                            renderGeneratedPosts(status.posts);
+                        } else {
+                            document.getElementById('generated-posts').innerHTML = '<div class="empty-state"><p>No posts generated. Check the error above.</p></div>';
+                        }
+                    }
+                };
+
+                setTimeout(checkStatus, 1000);
+            } catch (e) {
+                alert('Failed to start generation');
+                document.getElementById('generate-btn').disabled = false;
+                document.getElementById('generation-progress').style.display = 'none';
+            }
+        }
+
+        function renderGeneratedPosts(posts) {
+            const container = document.getElementById('generated-posts');
+
+            container.innerHTML = posts.map((post, i) => `
+                <div class="post-preview">
+                    <div class="post-preview-header">
+                        <span class="post-type-badge ${post.post_type}">${post.post_type}</span>
+                        <span style="color: var(--text-light); font-size: 0.85rem;">
+                            Est. engagement: ${post.estimated_engagement}
+                        </span>
+                    </div>
+                    <div class="post-content">${escapeHtml(post.content)}</div>
+                    <div class="post-hashtags">${post.hashtags.map(h => '#' + h).join(' ')}</div>
+                    <div class="mt-2">
+                        <button class="btn btn-sm btn-secondary" onclick="copyPost(${i})">Copy</button>
+                    </div>
+                </div>
+            `).join('');
+
+            // Store posts for copying
+            window.generatedPosts = posts;
+        }
+
+        function copyPost(index) {
+            const post = window.generatedPosts[index];
+            const text = post.content + '\n\n' + post.hashtags.map(h => '#' + h).join(' ');
+            navigator.clipboard.writeText(text);
+            alert('Post copied to clipboard!');
+        }
+
+        // LinkedIn Scraping
+        async function loadLinkedInPosts() {
+            try {
+                const res = await fetch(`${API_BASE}/api/linkedin/posts`);
+                const data = await res.json();
+                renderLinkedInPosts(data.posts);
+            } catch (e) {
+                document.getElementById('linkedin-posts').innerHTML = '<div class="empty-state"><p>No cached posts available.</p></div>';
+            }
+        }
+
+        function renderLinkedInPosts(posts) {
+            const container = document.getElementById('linkedin-posts');
+
+            if (!posts || posts.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <p>No LinkedIn posts cached. Click "Scan LinkedIn" to fetch top posts.</p>
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = posts.slice(0, 10).map(post => `
+                <div class="article-item">
+                    <div class="article-info">
+                        <h4>${escapeHtml(post.author_name || 'Unknown Author')}</h4>
+                        <div class="meta">Engagement: ${post.engagement_score} | ${post.content.substring(0, 100)}...</div>
+                    </div>
+                    <div class="article-actions">
+                        <span class="status-badge">${post.likes_count} likes</span>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        async function startScraping() {
+            document.getElementById('scrape-btn').disabled = true;
+            document.getElementById('scraping-progress').style.display = 'block';
+
+            try {
+                await fetch(`${API_BASE}/api/linkedin/scrape`, {method: 'POST'});
+
+                const checkStatus = async () => {
+                    const res = await fetch(`${API_BASE}/api/linkedin/scrape/status`);
+                    const status = await res.json();
+
+                    document.getElementById('scraping-status').textContent = status.progress;
+
+                    if (status.running) {
+                        setTimeout(checkStatus, 2000);
+                    } else {
+                        document.getElementById('scrape-btn').disabled = false;
+                        document.getElementById('scraping-progress').style.display = 'none';
+                        await loadLinkedInPosts();
+                        await loadIdeas();
+                    }
+                };
+
+                setTimeout(checkStatus, 2000);
+            } catch (e) {
+                alert('Failed to start scraping');
+                document.getElementById('scrape-btn').disabled = false;
+                document.getElementById('scraping-progress').style.display = 'none';
+            }
+        }
+
+        // Utility
+        function escapeHtml(text) {
+            if (!text) return '';
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        // Start
+        init();
+    </script>
+</body>
+</html>
