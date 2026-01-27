@@ -1,0 +1,103 @@
+{
+  "sample_posts": [
+    {
+      "author_name": "AI Insights",
+      "author_headline": "AI Strategist | Helping businesses leverage AI",
+      "content": "I automated 80% of my workflow last month.\n\nHere's exactly what I did:\n\n1. Email responses → AI drafts, I review\n2. Meeting notes → Auto-transcribed and summarized\n3. Research → AI gathers, I analyze\n4. Social posts → AI suggests, I refine\n5. Data entry → Completely automated\n\nThe result?\n→ 15 hours saved per week\n→ Zero decrease in quality\n→ More time for strategic thinking\n\nThe future isn't about replacing humans.\nIt's about augmenting what we can do.\n\nWhat's one task you've automated recently?",
+      "engagement_score": 1250,
+      "likes_count": 890,
+      "comments_count": 180,
+      "post_type": "listicle"
+    },
+    {
+      "author_name": "Tech Leader",
+      "author_headline": "CTO | Building the future of work",
+      "content": "Everyone's talking about AI replacing jobs.\n\nBut here's what nobody's discussing:\n\nAI is creating entirely NEW job categories.\n\n→ Prompt Engineers\n→ AI Trainers\n→ Ethics Officers\n→ Human-AI Collaboration Specialists\n→ AI Auditors\n\nThe question isn't whether AI will change work.\n\nIt's whether you'll be ready for the change.\n\nThe best time to start learning AI was yesterday.\nThe second best time is now.\n\nWhat new AI skill are you developing?",
+      "engagement_score": 980,
+      "likes_count": 720,
+      "comments_count": 130,
+      "post_type": "contrarian"
+    },
+    {
+      "author_name": "Productivity Pro",
+      "author_headline": "Helping professionals 10x their output",
+      "content": "I asked ChatGPT to review my business strategy.\n\nIt found 3 critical flaws I had missed.\n\nHere's my exact prompt:\n\n\"Act as a seasoned business strategist with 20 years of experience. Review my strategy below and identify:\n1. Logical inconsistencies\n2. Missing considerations\n3. Potential risks I haven't addressed\n4. Opportunities I might be overlooking\n\nBe brutally honest.\"\n\nThe insights were worth more than a $5,000 consulting session.\n\nAI isn't replacing thinking.\nIt's enhancing it.\n\nSave this prompt for later.",
+      "engagement_score": 2100,
+      "likes_count": 1500,
+      "comments_count": 300,
+      "post_type": "hook-story"
+    },
+    {
+      "author_name": "Future of Work",
+      "author_headline": "Researcher | Speaker | Author",
+      "content": "Unpopular opinion:\n\nMost people are using AI wrong.\n\nThey treat it like Google.\nAsk a question. Get an answer. Done.\n\nBut AI's real power is in iteration.\n\n→ Start with a rough idea\n→ Ask AI to expand it\n→ Critique the output\n→ Refine together\n→ Repeat until excellent\n\nThis is how you go from 'meh' to 'wow.'\n\nStop asking AI for answers.\nStart having conversations with it.\n\nAgree or disagree?",
+      "engagement_score": 1680,
+      "likes_count": 1200,
+      "comments_count": 240,
+      "post_type": "contrarian"
+    },
+    {
+      "author_name": "AI Automation Expert",
+      "author_headline": "Building AI systems that work while you sleep",
+      "content": "My morning routine used to take 2 hours.\n\nNow it takes 20 minutes.\n\nHere's my AI-powered morning:\n\n6:00 AM - Wake up to AI-curated news summary\n6:05 AM - Review AI-prioritized task list\n6:10 AM - Check AI-drafted email responses\n6:15 AM - Skim AI-generated meeting briefs\n6:20 AM - Ready to do deep work\n\nTools I use:\n→ Notion AI for task management\n→ ChatGPT for email drafts\n→ Otter.ai for meeting prep\n→ Feedly + AI for news curation\n\nThe goal isn't to be lazy.\nIt's to protect your best hours for your best work.\n\nWhat's your AI morning routine?",
+      "engagement_score": 1420,
+      "likes_count": 1000,
+      "comments_count": 210,
+      "post_type": "listicle"
+    },
+    {
+      "author_name": "Startup Founder",
+      "author_headline": "Built 3 companies | Now helping others scale",
+      "content": "I replaced a $50,000/year employee with AI.\n\nBefore you judge, hear me out.\n\nIt was ME.\n\nI was spending 25 hours/week on:\n→ Data entry\n→ Report formatting\n→ Email scheduling\n→ Calendar management\n→ Basic research\n\nNow AI handles all of it.\n\nI promoted myself to:\n→ Strategy\n→ Relationships\n→ Creative work\n→ High-value decisions\n\nAI didn't replace a job.\nIt elevated one.\n\nWhat tasks should you be delegating to AI?",
+      "engagement_score": 2450,
+      "likes_count": 1800,
+      "comments_count": 325,
+      "post_type": "hook-story"
+    },
+    {
+      "author_name": "Content Creator",
+      "author_headline": "Teaching AI content strategies",
+      "content": "The best LinkedIn posts in 2024 have ONE thing in common:\n\nThey make you STOP scrolling.\n\nHere's the formula:\n\n1. Hook (first line) = Pattern interrupt\n2. Story = Relatable situation\n3. Insight = Unexpected twist\n4. Value = Actionable takeaway\n5. CTA = Engagement driver\n\nMost posts fail at step 1.\n\nYour hook needs to:\n→ Create curiosity\n→ Challenge assumptions\n→ Promise value\n\nMaster the hook.\nMaster LinkedIn.\n\nWhat's a hook that stopped YOUR scroll recently?",
+      "engagement_score": 890,
+      "likes_count": 650,
+      "comments_count": 120,
+      "post_type": "listicle"
+    },
+    {
+      "author_name": "Enterprise AI Lead",
+      "author_headline": "Deploying AI at Fortune 500 companies",
+      "content": "Why do 87% of AI projects fail?\n\nAfter leading 50+ AI implementations, I found 3 patterns:\n\n1. Starting with technology, not problems\n→ Fix: Identify pain points FIRST\n\n2. Expecting magic, not iteration\n→ Fix: Plan for 6-12 months of refinement\n\n3. Ignoring the human element\n→ Fix: Train people alongside systems\n\nAI success isn't about the algorithm.\n\nIt's about alignment:\n→ Problem alignment\n→ Expectation alignment\n→ People alignment\n\nGet these right, and the technology follows.\n\nWhat AI project have you seen fail? Why?",
+      "engagement_score": 1150,
+      "likes_count": 820,
+      "comments_count": 165,
+      "post_type": "question"
+    },
+    {
+      "author_name": "Solo Entrepreneur",
+      "author_headline": "Running a $500K business solo with AI",
+      "content": "I run a $500,000/year business.\n\nMy team? Just me and AI.\n\nHere's my tech stack:\n\n📧 Customer support: ChatGPT + Zapier\n📊 Analytics: Obviously AI\n📝 Content: Claude + Jasper\n📅 Scheduling: Calendly + AI\n💰 Invoicing: Automated workflows\n📱 Social: Buffer + AI captions\n\nTotal cost: ~$500/month\n\nVs hiring: $150,000+/year\n\nThis isn't about avoiding people.\nIt's about starting lean and scaling smart.\n\nThe solopreneur era is here.\n\nWhat tools power YOUR business?",
+      "engagement_score": 3200,
+      "likes_count": 2400,
+      "comments_count": 400,
+      "post_type": "hook-story"
+    },
+    {
+      "author_name": "AI Ethics Researcher",
+      "author_headline": "Ensuring AI benefits humanity",
+      "content": "Hot take:\n\nThe biggest AI risk isn't superintelligence.\n\nIt's mediocrity at scale.\n\n→ Average content flooding the internet\n→ Generic responses replacing human nuance\n→ Copy-paste thinking becoming normal\n\nAI amplifies whatever we feed it.\n\nFeed it mediocrity → Get mediocrity at scale\nFeed it excellence → Get excellence at scale\n\nThe question isn't whether to use AI.\n\nIt's whether you'll use it to raise the bar\nor lower it.\n\nChoose wisely.\n\nThoughts?",
+      "engagement_score": 1780,
+      "likes_count": 1300,
+      "comments_count": 240,
+      "post_type": "contrarian"
+    }
+  ],
+  "trending_themes": [
+    "AI Automation",
+    "Productivity",
+    "Future of Work",
+    "AI Tools",
+    "Solopreneurship",
+    "Prompt Engineering",
+    "AI Ethics"
+  ]
+}

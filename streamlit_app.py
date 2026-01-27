@@ -1,18 +1,34 @@
-"""Streamlit Web App for LinkedIn Post Curator."""
+"""Streamlit Web App for LinkedIn Post Curator - Cloud Compatible."""
 import os
 import sys
+import json
 from pathlib import Path
 from datetime import datetime
+from dataclasses import dataclass
 
 import streamlit as st
 
 # Add project root to path
 sys.path.insert(0, str(Path(__file__).parent))
 
-from src.config import ARTICLES_DIR, GEMINI_API_KEY, LINKEDIN_EMAIL
-from src.linkedin_scraper import LinkedInScraper
 from src.article_reader import ArticleReader
-from src.post_generator import PostGenerator
+
+# Try to import config, fall back to st.secrets for cloud
+try:
+    from src.config import ARTICLES_DIR
+except:
+    ARTICLES_DIR = Path(__file__).parent / "articles"
+    ARTICLES_DIR.mkdir(exist_ok=True)
+
+# Get API key from secrets (cloud) or environment (local)
+def get_gemini_api_key():
+    """Get Gemini API key from Streamlit secrets or environment."""
+    try:
+        return st.secrets.get("GEMINI_API_KEY", os.getenv("GEMINI_API_KEY", ""))
+    except:
+        return os.getenv("GEMINI_API_KEY", "")
+
+GEMINI_API_KEY = get_gemini_api_key()
 
 # Page config
 st.set_page_config(
@@ -69,14 +85,26 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 
+@dataclass
+class SamplePost:
+    """Represents a sample LinkedIn post for inspiration."""
+    author_name: str
+    author_headline: str
+    content: str
+    engagement_score: int
+    likes_count: int
+    comments_count: int
+    post_type: str
+
+
 def init_session_state():
     """Initialize session state variables."""
     if 'generated_posts' not in st.session_state:
         st.session_state.generated_posts = []
-    if 'cached_linkedin_posts' not in st.session_state:
-        st.session_state.cached_linkedin_posts = []
-    if 'scraping_in_progress' not in st.session_state:
-        st.session_state.scraping_in_progress = False
+    if 'custom_posts' not in st.session_state:
+        st.session_state.custom_posts = []
+    if 'inspiration_posts' not in st.session_state:
+        st.session_state.inspiration_posts = []
 
 
 def load_articles():
@@ -85,11 +113,38 @@ def load_articles():
     return reader.read_directory()
 
 
-def load_cached_linkedin_posts():
-    """Load cached LinkedIn posts."""
-    scraper = LinkedInScraper()
-    posts = scraper.load_cache(max_age_hours=168)  # 1 week
-    return posts
+def load_sample_posts():
+    """Load sample posts from JSON file."""
+    sample_file = Path(__file__).parent / "data" / "sample_posts.json"
+
+    if sample_file.exists():
+        try:
+            with open(sample_file, 'r', encoding='utf-8') as f:
+                data = json.load(f)
+
+            posts = []
+            for p in data.get("sample_posts", []):
+                posts.append(SamplePost(
+                    author_name=p.get("author_name", "Unknown"),
+                    author_headline=p.get("author_headline", ""),
+                    content=p.get("content", ""),
+                    engagement_score=p.get("engagement_score", 0),
+                    likes_count=p.get("likes_count", 0),
+                    comments_count=p.get("comments_count", 0),
+                    post_type=p.get("post_type", "insight")
+                ))
+            return posts, data.get("trending_themes", [])
+        except Exception as e:
+            st.error(f"Error loading sample posts: {e}")
+            return [], []
+    return [], []
+
+
+def get_all_inspiration_posts():
+    """Get all inspiration posts (sample + custom)."""
+    sample_posts, _ = load_sample_posts()
+    custom_posts = st.session_state.get('custom_posts', [])
+    return sample_posts + custom_posts
 
 
 # ============ PAGES ============
@@ -99,41 +154,22 @@ def content_ideas_page():
     st.markdown('<p class="main-header">Content Ideas</p>', unsafe_allow_html=True)
     st.markdown('<p class="sub-header">Discover trending themes and hook patterns from top LinkedIn posts</p>', unsafe_allow_html=True)
 
-    # Load cached posts
-    posts = load_cached_linkedin_posts()
+    # Load sample posts
+    posts, themes = load_sample_posts()
+    custom_posts = st.session_state.get('custom_posts', [])
+    all_posts = posts + custom_posts
 
-    if not posts:
-        st.warning("No LinkedIn posts cached yet. Go to **LinkedIn Scanner** to scrape top posts first.")
-        if st.button("Go to LinkedIn Scanner"):
-            st.session_state.page = "LinkedIn Scanner"
-            st.rerun()
+    if not all_posts:
+        st.warning("No inspiration posts available. Go to **Inspiration Posts** to add some.")
         return
 
-    # Extract themes
-    themes = set()
-    for post in posts[:20]:
-        content_lower = post.content.lower()
-        if 'ai' in content_lower or 'artificial intelligence' in content_lower:
-            themes.add('AI/Machine Learning')
-        if 'automat' in content_lower:
-            themes.add('Automation')
-        if 'productiv' in content_lower:
-            themes.add('Productivity')
-        if 'future' in content_lower:
-            themes.add('Future Trends')
-        if 'tool' in content_lower or 'app' in content_lower:
-            themes.add('Tools & Apps')
-        if 'chatgpt' in content_lower or 'gpt' in content_lower:
-            themes.add('ChatGPT/GPT')
-        if 'prompt' in content_lower:
-            themes.add('Prompting')
-
     # Display trending themes
-    st.subheader("Trending Themes")
-    theme_cols = st.columns(len(themes) if themes else 1)
-    for i, theme in enumerate(list(themes)):
-        with theme_cols[i % len(theme_cols)]:
-            st.info(f"**{theme}**")
+    if themes:
+        st.subheader("Trending Themes")
+        theme_cols = st.columns(min(len(themes), 4))
+        for i, theme in enumerate(themes[:8]):
+            with theme_cols[i % len(theme_cols)]:
+                st.info(f"**{theme}**")
 
     st.divider()
 
@@ -141,16 +177,19 @@ def content_ideas_page():
     st.subheader("Top Hook Patterns")
     st.caption("Learn from these high-engagement opening lines")
 
-    for i, post in enumerate(posts[:6]):
+    for i, post in enumerate(all_posts[:8]):
         hook = post.content.split('\n')[0][:150]
 
-        # Determine format type
-        if any(char.isdigit() for char in post.content[:50]):
+        # Determine format type and color
+        if post.post_type == "listicle":
             format_type = "Listicle"
             color = "#057642"
-        elif '?' in post.content[:100]:
+        elif post.post_type == "question":
             format_type = "Question"
             color = "#b24020"
+        elif post.post_type == "contrarian":
+            format_type = "Contrarian"
+            color = "#7c3aed"
         else:
             format_type = "Story/Insight"
             color = "#0a66c2"
@@ -260,7 +299,13 @@ def generate_posts_page():
 
     # Check Gemini API
     if not GEMINI_API_KEY:
-        st.error("Gemini API key not configured. Please add GEMINI_API_KEY to your .env file.")
+        st.error("""
+        **Gemini API key not configured.**
+
+        Add `GEMINI_API_KEY` to your Streamlit secrets or `.env` file.
+
+        Get your key from: https://makersuite.google.com/app/apikey
+        """)
         return
 
     # Load articles
@@ -285,7 +330,11 @@ def generate_posts_page():
         num_posts = st.slider("Number of posts to generate", min_value=1, max_value=10, value=5)
 
         # Use inspiration
-        use_inspiration = st.checkbox("Use top LinkedIn posts as inspiration", value=True)
+        inspiration_posts = get_all_inspiration_posts()
+        use_inspiration = st.checkbox(
+            f"Use inspiration posts ({len(inspiration_posts)} available)",
+            value=len(inspiration_posts) > 0
+        )
 
         # Post styles
         st.caption("Post styles that will be generated:")
@@ -311,10 +360,28 @@ def generate_posts_page():
     if st.button("Generate Posts", type="primary", use_container_width=True):
         with st.spinner("Generating LinkedIn posts with Gemini AI..."):
             try:
-                # Load reference posts if requested
+                # Import here to avoid issues if not installed
+                from src.post_generator import PostGenerator
+
+                # Prepare reference posts for inspiration
                 reference_posts = None
-                if use_inspiration:
-                    reference_posts = load_cached_linkedin_posts()
+                if use_inspiration and inspiration_posts:
+                    # Convert to format expected by generator
+                    from src.linkedin_scraper import LinkedInPost
+                    reference_posts = []
+                    for p in inspiration_posts[:10]:
+                        ref_post = LinkedInPost(
+                            author_name=p.author_name,
+                            author_headline=p.author_headline,
+                            author_profile_url="",
+                            content=p.content,
+                            post_url="",
+                            likes_count=p.likes_count,
+                            comments_count=p.comments_count,
+                            reposts_count=0,
+                            engagement_score=p.engagement_score
+                        )
+                        reference_posts.append(ref_post)
 
                 # Generate posts
                 generator = PostGenerator()
@@ -346,7 +413,7 @@ def generate_posts_page():
                     if st.button("Copy", key=f"copy_{i}"):
                         full_text = post.content + "\n\n" + " ".join(f"#{tag}" for tag in post.hashtags)
                         st.code(full_text, language=None)
-                        st.info("Text shown above - copy it manually (Streamlit clipboard not supported in all browsers)")
+                        st.info("Copy the text above")
 
                 # Content
                 st.markdown(f"""
@@ -360,94 +427,95 @@ def generate_posts_page():
             st.divider()
 
 
-def linkedin_scanner_page():
-    """LinkedIn Scanner page - scrape top posts using headless browser."""
-    st.markdown('<p class="main-header">LinkedIn Scanner</p>', unsafe_allow_html=True)
-    st.markdown('<p class="sub-header">Scrape top-performing AI & automation posts using headless browser</p>', unsafe_allow_html=True)
+def inspiration_posts_page():
+    """Inspiration Posts page - manage sample and custom posts."""
+    st.markdown('<p class="main-header">Inspiration Posts</p>', unsafe_allow_html=True)
+    st.markdown('<p class="sub-header">View sample posts and add your own LinkedIn posts for inspiration</p>', unsafe_allow_html=True)
 
-    # Check LinkedIn credentials
-    if not LINKEDIN_EMAIL:
-        st.warning("""
-        **LinkedIn credentials not configured.**
+    # Tabs for sample vs custom
+    tab1, tab2 = st.tabs(["Sample Posts", "Add Your Own"])
 
-        To enable scraping, add these to your `.env` file:
-        ```
-        LINKEDIN_EMAIL=your_email@example.com
-        LINKEDIN_PASSWORD=your_password
-        ```
-        """)
+    with tab1:
+        st.subheader("Pre-loaded Sample Posts")
+        st.caption("High-performing AI & automation posts for inspiration")
 
-    # Scan button
-    col1, col2 = st.columns([1, 2])
-    with col1:
-        if st.button("Scan LinkedIn", type="primary", disabled=not LINKEDIN_EMAIL):
-            st.session_state.scraping_in_progress = True
+        posts, themes = load_sample_posts()
 
-            progress_bar = st.progress(0)
-            status_text = st.empty()
+        if not posts:
+            st.warning("No sample posts found. Check data/sample_posts.json")
+        else:
+            # Summary metrics
+            col1, col2, col3 = st.columns(3)
+            with col1:
+                avg_engagement = sum(p.engagement_score for p in posts) / len(posts)
+                st.metric("Avg Engagement", f"{avg_engagement:.0f}")
+            with col2:
+                total_likes = sum(p.likes_count for p in posts)
+                st.metric("Total Likes", f"{total_likes:,}")
+            with col3:
+                st.metric("Sample Posts", len(posts))
 
-            try:
-                status_text.text("Initializing headless browser...")
-                progress_bar.progress(10)
+            st.divider()
 
-                scraper = LinkedInScraper()
+            # Post list
+            for i, post in enumerate(posts):
+                with st.expander(f"{post.author_name} - Engagement: {post.engagement_score}"):
+                    st.markdown(f"**{post.author_headline}**")
+                    st.markdown(post.content)
 
-                status_text.text("Logging in to LinkedIn...")
-                progress_bar.progress(30)
+                    col1, col2 = st.columns(2)
+                    with col1:
+                        st.caption(f"Likes: {post.likes_count}")
+                    with col2:
+                        st.caption(f"Type: {post.post_type}")
 
-                posts = scraper.fetch_top_posts()
+    with tab2:
+        st.subheader("Add Custom LinkedIn Posts")
+        st.caption("Paste LinkedIn posts you find inspiring to use as reference")
 
-                progress_bar.progress(100)
-                status_text.text(f"Done! Found {len(posts)} posts.")
+        with st.form("add_custom_post"):
+            author = st.text_input("Author Name", placeholder="e.g., John Smith")
+            headline = st.text_input("Author Headline", placeholder="e.g., AI Consultant")
+            content = st.text_area("Post Content", height=200, placeholder="Paste the LinkedIn post content here...")
 
-                st.session_state.cached_linkedin_posts = posts
-                st.success(f"Successfully scraped {len(posts)} posts!")
+            post_type = st.selectbox("Post Type", ["hook-story", "listicle", "question", "insight", "contrarian"])
 
-            except Exception as e:
-                st.error(f"Scraping failed: {str(e)}")
-            finally:
-                st.session_state.scraping_in_progress = False
+            col1, col2 = st.columns(2)
+            with col1:
+                engagement = st.number_input("Engagement Score (estimate)", min_value=0, value=500)
+            with col2:
+                likes = st.number_input("Likes (estimate)", min_value=0, value=300)
 
-    with col2:
-        st.caption("This uses Selenium with a headless Chrome browser to scrape LinkedIn search results for AI/automation posts.")
+            submitted = st.form_submit_button("Add Post", type="primary")
 
-    st.divider()
+            if submitted and content:
+                new_post = SamplePost(
+                    author_name=author or "Anonymous",
+                    author_headline=headline or "",
+                    content=content,
+                    engagement_score=engagement,
+                    likes_count=likes,
+                    comments_count=0,
+                    post_type=post_type
+                )
 
-    # Display cached posts
-    posts = load_cached_linkedin_posts()
+                if 'custom_posts' not in st.session_state:
+                    st.session_state.custom_posts = []
+                st.session_state.custom_posts.append(new_post)
+                st.success("Post added to your inspiration collection!")
+                st.rerun()
 
-    if posts:
-        st.subheader(f"Cached Posts ({len(posts)})")
-        st.caption("Posts are cached for 7 days")
+        # Show custom posts
+        if st.session_state.get('custom_posts'):
+            st.divider()
+            st.subheader(f"Your Custom Posts ({len(st.session_state.custom_posts)})")
 
-        # Summary metrics
-        col1, col2, col3 = st.columns(3)
-        with col1:
-            avg_engagement = sum(p.engagement_score for p in posts) / len(posts) if posts else 0
-            st.metric("Avg Engagement", f"{avg_engagement:.0f}")
-        with col2:
-            total_likes = sum(p.likes_count for p in posts)
-            st.metric("Total Likes", f"{total_likes:,}")
-        with col3:
-            st.metric("Posts Cached", len(posts))
-
-        st.divider()
-
-        # Post list
-        for i, post in enumerate(posts[:15]):
-            with st.expander(f"{post.author_name} - Engagement: {post.engagement_score}"):
-                st.markdown(f"**{post.author_headline}**")
-                st.markdown(post.content[:500] + "..." if len(post.content) > 500 else post.content)
-
-                col1, col2, col3 = st.columns(3)
-                with col1:
-                    st.caption(f"Likes: {post.likes_count}")
-                with col2:
-                    st.caption(f"Comments: {post.comments_count}")
-                with col3:
-                    st.caption(f"Reposts: {post.reposts_count}")
-    else:
-        st.info("No cached posts. Click 'Scan LinkedIn' to fetch top posts.")
+            for i, post in enumerate(st.session_state.custom_posts):
+                with st.expander(f"{post.author_name} - {post.post_type}"):
+                    st.markdown(post.content[:300] + "..." if len(post.content) > 300 else post.content)
+                    if st.button("Remove", key=f"remove_custom_{i}"):
+                        st.session_state.custom_posts.pop(i)
+                        st.rerun()
 
 
 # ============ MAIN APP ============
@@ -465,7 +533,7 @@ def main():
 
         page = st.radio(
             "Navigation",
-            ["Content Ideas", "My Articles", "Generate Posts", "LinkedIn Scanner"],
+            ["Content Ideas", "My Articles", "Generate Posts", "Inspiration Posts"],
             label_visibility="collapsed"
         )
 
@@ -477,18 +545,17 @@ def main():
         articles = load_articles()
         st.markdown(f"**Articles:** {len(articles)}")
 
-        posts = load_cached_linkedin_posts()
-        st.markdown(f"**Cached Posts:** {len(posts)}")
+        sample_posts, _ = load_sample_posts()
+        custom_posts = len(st.session_state.get('custom_posts', []))
+        st.markdown(f"**Inspiration Posts:** {len(sample_posts) + custom_posts}")
 
         if GEMINI_API_KEY:
             st.success("Gemini API: Configured")
         else:
             st.error("Gemini API: Not set")
 
-        if LINKEDIN_EMAIL:
-            st.success("LinkedIn: Configured")
-        else:
-            st.warning("LinkedIn: Not set")
+        st.divider()
+        st.caption("☁️ Cloud-ready version")
 
     # Main content
     if page == "Content Ideas":
@@ -497,8 +564,8 @@ def main():
         my_articles_page()
     elif page == "Generate Posts":
         generate_posts_page()
-    elif page == "LinkedIn Scanner":
-        linkedin_scanner_page()
+    elif page == "Inspiration Posts":
+        inspiration_posts_page()
 
 
 if __name__ == "__main__":
