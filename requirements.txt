@@ -1,0 +1,17 @@
+# Web scraping
+selenium==4.17.2
+webdriver-manager==4.0.1
+beautifulsoup4==4.12.3
+requests==2.31.0
+
+# Google integrations
+google-generativeai==0.4.0
+google-auth==2.27.0
+google-auth-oauthlib==1.2.0
+gspread==6.0.2
+
+# Utilities
+python-dotenv==1.0.1
+rich==13.7.0
+click==8.1.7
+markdown==3.5.2
