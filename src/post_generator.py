@@ -73,11 +73,28 @@ class PostGenerator:
             {"category": "HARM_CATEGORY_DANGEROUS_CONTENT", "threshold": "BLOCK_ONLY_HIGH"},
         ]
 
-        self.model = genai.GenerativeModel(
-            'gemini-1.5-flash',
-            generation_config=generation_config,
-            safety_settings=safety_settings
-        )
+        # Try different model names for compatibility
+        model_names = ['gemini-2.0-flash', 'gemini-1.5-flash', 'gemini-pro']
+        self.model = None
+
+        for model_name in model_names:
+            try:
+                self.model = genai.GenerativeModel(
+                    model_name,
+                    generation_config=generation_config,
+                    safety_settings=safety_settings
+                )
+                # Test if model works with a simple prompt
+                test_response = self.model.generate_content("Say 'ok'")
+                if test_response.text:
+                    console.print(f"[green]Using model: {model_name}[/green]")
+                    break
+            except Exception as e:
+                console.print(f"[yellow]Model {model_name} not available: {str(e)[:50]}...[/yellow]")
+                continue
+
+        if self.model is None:
+            raise ValueError("No compatible Gemini model found. Please check your API key.")
         self.generated_posts: list[GeneratedPost] = []
         self.errors: list[str] = []  # Track errors for debugging
 
