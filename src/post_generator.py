@@ -73,28 +73,58 @@ class PostGenerator:
             {"category": "HARM_CATEGORY_DANGEROUS_CONTENT", "threshold": "BLOCK_ONLY_HIGH"},
         ]
 
-        # Try different model names for compatibility
-        model_names = ['gemini-2.0-flash', 'gemini-1.5-flash', 'gemini-pro']
+        # Find available models that support generateContent
         self.model = None
+        available_models = []
 
-        for model_name in model_names:
+        try:
+            for m in genai.list_models():
+                if 'generateContent' in [method.name for method in m.supported_generation_methods]:
+                    available_models.append(m.name)
+        except Exception as e:
+            console.print(f"[yellow]Could not list models: {e}[/yellow]")
+
+        if available_models:
+            console.print(f"[dim]Available models: {available_models[:5]}[/dim]")
+
+        # Preferred models in order
+        preferred = ['models/gemini-2.0-flash', 'models/gemini-1.5-flash', 'models/gemini-1.5-pro', 'models/gemini-pro']
+
+        # Try preferred models first, then any available
+        models_to_try = []
+        for p in preferred:
+            if p in available_models:
+                models_to_try.append(p)
+        # Add any other available models
+        for m in available_models:
+            if m not in models_to_try and 'gemini' in m.lower():
+                models_to_try.append(m)
+
+        # Fallback to hardcoded if list_models failed
+        if not models_to_try:
+            models_to_try = ['gemini-2.0-flash-exp', 'gemini-1.5-flash-latest', 'gemini-1.5-pro-latest', 'gemini-pro']
+
+        for model_name in models_to_try:
             try:
+                # Remove 'models/' prefix if present for GenerativeModel
+                clean_name = model_name.replace('models/', '')
                 self.model = genai.GenerativeModel(
-                    model_name,
+                    clean_name,
                     generation_config=generation_config,
                     safety_settings=safety_settings
                 )
-                # Test if model works with a simple prompt
-                test_response = self.model.generate_content("Say 'ok'")
+                # Test if model works
+                test_response = self.model.generate_content("Say ok")
                 if test_response.text:
-                    console.print(f"[green]Using model: {model_name}[/green]")
+                    console.print(f"[green]Using model: {clean_name}[/green]")
                     break
             except Exception as e:
-                console.print(f"[yellow]Model {model_name} not available: {str(e)[:50]}...[/yellow]")
+                console.print(f"[yellow]Model {model_name} failed: {str(e)[:60]}...[/yellow]")
+                self.model = None
                 continue
 
         if self.model is None:
-            raise ValueError("No compatible Gemini model found. Please check your API key.")
+            raise ValueError(f"No compatible Gemini model found. Available: {available_models}. Check your API key.")
         self.generated_posts: list[GeneratedPost] = []
         self.errors: list[str] = []  # Track errors for debugging
 
